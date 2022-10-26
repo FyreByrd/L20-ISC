@@ -1,0 +1,24 @@
+{
+    "name": "l20",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": ">=0.9.0-pre.1"
+    },
+    "publisher": "Aidan E. Jones",
+    "contributes": {
+        "languages": [{
+            "id": "l20",
+            "aliases": ["L20"],
+            "extensions": [".l20",".l20"],
+            "icon": {
+                "light": "./icons/l20-icon.png",
+                "dark": "./icons/l20-icon.png"
+            }
+        }],
+        "grammars": [{
+            "language": "l20",
+            "scopeName": "source.l20",
+            "path": "./syntaxes/l20.tmGrammar.json"
+        }]
+    }
+}
