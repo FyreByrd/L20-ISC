@@ -10,7 +10,15 @@ The **L20** **I**nstruction **S**et **C**omputer is an Instruction Set and accom
     - The assembler.
 - L20 Instruction Set.md
     - A description of the instruction set.
-- L20 Assembler.md
-    - A description of some special features of the assembler.
 - l20-vscode-extension
     - A VS Code extension for some syntax highlighting. 
+
+## Usage
+run `python3 l20asm.py <source>` in the terminal
+
+arguments:
+- 1: source file (required)
+- 2: destination file (optional)
+
+Providing the option `--disassemble` will  disassemble the source file.  
+If there are `__DATA` tags in the source file, the data will be separated out into a separate file with the same name as the destination file but appended with `-data`.
