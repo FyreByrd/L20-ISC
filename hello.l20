@@ -1,0 +1,35 @@
+; file: hello.l20
+; author: Aidan Jones
+; description: prints Hello, World! to IO terminal
+MOV R3 message; pointer to message
+MOV R4 #0; char index in packed string
+MOV R5 #-3; compare against R4
+MOV R6 #0; message offset
+MOV R7 shift_offsets; shift offset array
+; DO
+print_char
+    LDR R2 R3[R6]; load set of 4 characters from packed message string
+
+    LDR R8 R7[R4]; load shift offset
+    MOV R2 R2 LSR R8; shift to get character
+
+    STR R2 RNEG; write character to terminal
+
+    ADD R0 R4 R5; check R4 against 3
+    CLF C; clear carry bit, since always set by 2comp
+    BZS r4_inc_else; if R4 != 3
+        ADD R4 R4 R1; R4++
+    JMP endif_r4_inc
+    r4_inc_else
+        MOV R4 R0; else R4 = 0
+        ADD R6 R6 R1; message offset++
+    endif_r4_inc
+    ADD R0 R0 R2 ; compare char to 0
+    CLF C; clear carry bit, since always set by 2comp
+    BZS end
+JMP print_char
+; WHILE character != 0
+end HLT
+
+__DATA shift_offsets [ 24 16 8 0 ]
+__DATA message "Hello, World!"
