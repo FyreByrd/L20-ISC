@@ -2,9 +2,10 @@
   "scopeName": "source.l20",
   "patterns": [
     { "include": "#label" },
-    { "include": "#directive"},
-    { "include": "#opcode" }, 
+    { "include": "#directive"}, 
+    { "include": "#opcode" },
     { "include": "#immediate"},
+    { "include": "#string"},
     { "include": "#register"},
     { "include": "#comment"}
   ],
@@ -17,17 +18,21 @@
       "match":"__[A-Z]{3,}",
       "name": "support.function.directive"
     },
-    "opcode": {
-      "match": "CIR|SIR|LDR|STR|ADD|NND|PSR|SEF|CLF|PPR|MOV|JMP|BCS|BVS|BZS|BNS|LSL|LSR|ASR",
-      "name": "keyword.opcode"
-    },
     "immediate":{
-      "match": "#-?(0x|x|b)?[0-9a-fA-F]*",
+      "match": "#-?(0x|x|b)?[0-9a-fA-F]*|N|Z|C|V",
       "name": "constant.numeric"
     },
+    "opcode": {
+      "match": "(CIR|SIR|LDR|STR|ADD|NND|PSR|SEF|CLF|PPR|MOV|JMP|BNS|BZS|BCS|BVS|B|LSL|LSR|ASR|HLT|NOP)",
+      "name": "keyword.opcode"
+    },
     "register":{
-      "match": "R([0-9]{1,3}|x[0-9a-fA-F]{1,2})",
+      "match": "(R([0-9]{1,3}|x[0-9a-fA-F]{1,2}|NEG))|PC|SP",
       "name": "variable"
+    },
+    "string":{
+      "match": "\b\".*\"\b",
+      "name": "string.quoted.double"
     },
     "comment": {
       "match": ";.*",

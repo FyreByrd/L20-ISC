@@ -9,7 +9,15 @@
         "languages": [{
             "id": "l20",
             "aliases": ["L20"],
-            "extensions": [".l20",".l20"],
+            "extensions": [".l20"],
+            "icon": {
+                "light": "./icons/l20-icon.png",
+                "dark": "./icons/l20-icon.png"
+            }
+        },{
+            "id": "lbin",
+            "aliases": ["L20 Binary"],
+            "extensions": [".lbin"],
             "icon": {
                 "light": "./icons/l20-icon.png",
                 "dark": "./icons/l20-icon.png"
@@ -19,6 +27,10 @@
             "language": "l20",
             "scopeName": "source.l20",
             "path": "./syntaxes/l20.tmGrammar.json"
+        },{
+            "language": "lbin",
+            "scopeName": "source.lbin",
+            "path": "./syntaxes/lbin.tmGrammar.json"
         }]
     }
 }

@@ -1,0 +1,22 @@
+{
+  "scopeName": "source.lbin",
+  "patterns": [
+    { "include": "#top" },
+    { "include": "#opcode" },
+    { "include": "#comment"}
+  ],
+  "repository": {
+    "top": {
+      "match":"v2\\.0 raw",
+      "name": "variable.language"
+    },
+    "opcode": {
+      "match": "[0-9a-f]{8}",
+      "name": "constant.numeric"
+    },
+    "comment": {
+      "match": "#.*",
+      "name": "comment"
+    }
+  }
+}
