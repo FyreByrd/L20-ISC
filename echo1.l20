@@ -1,0 +1,19 @@
+; file: echo1.l20
+; author: Aidan Jones
+; description: loops and prints keyboard input until newline is encountered
+MOV R2 #x1000000; IO start
+MOV R10 #-10
+ADD R4 R2 R4
+ADD R3 R2 R1
+STR R1 R3
+ADD R4 R3 R1
+io_loop
+    LDR R5 R4
+    ADD R0 R5 R0
+BZS io_loop
+    STR R5 R2
+    ADD R0 R5 R10
+    CLF C
+    BZS end
+JMP io_loop
+end HLT
