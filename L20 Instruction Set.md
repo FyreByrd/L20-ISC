@@ -61,3 +61,10 @@ NVIC format
 31: type (0: halt, 1:jump to handler)
 30-24: priority
 23-0: handler address
+
+## IO
+Any address above 0x00FFFFFF is considered IO.
+Addresses:
+- 0x01000000: Terminal Write
+- 0x01000001: Keyboard Enable
+- 0x01000002: Keyboard Read
