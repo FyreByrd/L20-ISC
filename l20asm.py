@@ -9,7 +9,7 @@ mn2hex = {
 
 aliases = {"RNEG":"R127", "PC":"R126", "SP":"R125", 
     "JMP": "B #b0000", "BNS": "B #b1000", "BZS": "B #b0100", "BCS":"B #b0010", "BVS":"B #b0001",
-    "HLT": "CIR #0", "NOP": "MOV R0 R0"
+    "HLT": "CIR #0", "NOP": "MOV R0 R0", "IO_block": "#x1000000"
 }
 labels = {}
 data_labels = {}

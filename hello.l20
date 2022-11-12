@@ -1,36 +1,73 @@
 ; file: hello.l20
 ; author: Aidan Jones
-; description: prints Hello, World! to IO terminal
-MOV R3 message; pointer to message
-MOV R4 #0; char index in packed string
-MOV R5 #-3; compare against R4
-MOV R6 #0; message offset
-MOV R7 shift_offsets; shift offset array
-MOV R9 #x1000000; start of IO block
-; DO
-print_char
-    LDR R2 R3[R6]; load set of 4 characters from packed message string
+; description: prints Hello, World! to IO terminal as a function call
+MOV R2 #255
+PSR R2
+MOV R2 hello
+PSR PC
+JMP print_str_func
+PPR R2
+HLT
 
-    LDR R8 R7[R4]; load shift offset
-    MOV R2 R2 LSR R8; shift to get character
+__DATA hello "Hello, World!"
 
-    STR R2 R9; write character to terminal
+; R2 = start of string
+; temporarily uses R3 for character to print
+; R4, R5, R6, R7, and R8 for tmp vars
+; R9 for IO block 
+print_str_func
+    ; MOV R2 start_of_string
+    ; preserve temporary registers
+        PSR R3
+        PSR R4
+        PSR R5
+        PSR R6
+        PSR R7
+        PSR R8
+        PSR R9
+    ; start of procedure
+    MOV R5 #0; string index
+    MOV R9 IO_block
+    ; DO
+    print_str_func_four
+        MOV R4 #0; char index
+        MOV R7 #24; shift amt
+        MOV R8 #-8
 
-    ADD R0 R4 R5; check R4 against 3
-    CLF C; clear carry bit, since always set by 2comp
-    BZS r4_inc_else; if R4 != 3
-        ADD R4 R4 R1; R4++
-    JMP endif_r4_inc
-    r4_inc_else
-        MOV R4 R0; else R4 = 0
-        ADD R6 R6 R1; message offset++
-    endif_r4_inc
-    ADD R0 R0 R2 ; compare char to 0
-    CLF C; clear carry bit, since always set by 2comp
-    BZS end
-JMP print_char
-; WHILE character != 0
-end HLT
+        print_str_func_char
+            LDR R3 R2[R5]; load set of 4 characters from packed message string
+            MOV R3 R3 LSR R7
+            STR R3 R9; write character to terminal
+            ADD R7 R7 R8; subtract 8 from shift amt
+            CLF C
+            
+            MOV R6 #-3
+            ADD R0 R4 R6; check char index against 3
+            CLF C; clear carry bit, since always set by 2comp
 
-__DATA shift_offsets [ 24 16 8 0 ]
-__DATA message "Hello, World!"
+            BZS print_str_func_r4_inc_else  ; if (R4 != 3) {
+                ADD R4 R4 R1                ;   R4++
+            JMP print_str_func_endif_r4_inc ; }
+            print_str_func_r4_inc_else      ; else {
+                MOV R4 R0                   ;   R4 = 0
+                ADD R5 R5 R1                ;   message offset++
+            print_str_func_endif_r4_inc     ; }
+
+            MOV R6 #x7F  ; R3 &= 0x7F
+            NND R3 R3 R6 ; --
+            NND R3 R3 R3 ; --
+            ADD R0 R3 R0 ; compare char to 0
+            CLF C; clear carry bit, since always set by 2comp
+            BZS print_str_func_end
+        JMP print_str_func_char
+    JMP print_str_func_four
+    ; WHILE character != 0
+    print_str_func_end
+        PPR R9
+        PPR R8
+        PPR R7
+        PPR R6
+        PPR R5
+        PPR R4
+        PPR R3
+    PPR PC; return
