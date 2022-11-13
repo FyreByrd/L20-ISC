@@ -1,0 +1,53 @@
+; file: ascii2bcd.l20
+; author: Aidan Jones
+; description: converts an array of ascii characters to a bcd number
+MOV R2 num
+MOV R3 #7
+PSR PC
+JMP ascii_to_bcd
+HLT
+__DATA num '12345678'; number to convert
+
+; converts an array of ascii characters to an 8-digit bcd number
+; R2 is pointer to array, and will be return value
+; R3 is the number of digits
+; R4-R8 are used temporarily
+ascii_to_bcd
+    ;save temporary registers
+        PSR R4
+        PSR R5
+        PSR R6
+        PSR R7
+        PSR R8
+    ;MOV R2 num
+    ;MOV R3 number of digits
+    ADD R3 R3 RNEG
+    CLF C
+    MOV R4 #-x30; ascii to bcd
+    MOV R5 #0; shift amt
+    MOV R6 #0; result
+    MOV R8 #4
+    ascii_to_bcd_loop
+        LDR R7 R2[R3]; read character from memory
+        ADD R7 R7 R4; convert to number
+        CLF C
+        MOV R7 R7 LSL R5; shift to correct place
+        ADD R6 R6 R7; add digit to result
+
+        ADD R5 R5 R8
+        ADD R3 R3 RNEG
+        CLF C
+        BNS ascii_to_bcd_end
+        JMP ascii_to_bcd_loop
+    ascii_to_bcd_end
+    CLF NZCV
+    MOV R2 R6
+    ; restore temporary registers
+        PPR R8
+        PPR R7
+        PPR R6
+        PPR R5
+        PPR R4
+    PPR PC; return
+
+; end of program
