@@ -19,6 +19,7 @@ bcd_to_int
     MOV R6 #-3
     MOV R8 #-4
     MOV R9 #-8
+    MOV R10 #32
     ADD R0 R2 R0; compare against 0
     BZS bcd_to_int_end
     bcd_to_int_loop1

@@ -1,0 +1,26 @@
+; file: doubledabble.l20
+; Author: Aidan Jones
+; description: uses the double-dabble algorithm to convert an integer into
+; -- a 10 digit bcd number
+MOV R2 #255
+PSR PC
+JMP doubledabble
+HLT
+
+; converts integer to bcd representation
+; R2 = integer/low digits
+; R3 will be high 2 digits
+; R4-R used temporarily
+doubledabble
+    MOV R4 R2; copy of original binary
+    MOV R2 #0
+    MOV R3 #0
+    ; Left shift into the output digits
+    ; For each group of input four bits:
+    ;   If group >= 5 add 3 to group
+    MOV R5 #32
+    doubledabble_loop1
+
+    doubledabble_end
+    PPR PC
+; end of program
