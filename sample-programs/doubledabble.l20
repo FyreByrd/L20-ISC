@@ -4,23 +4,98 @@
 ; -- a 10 digit bcd number
 MOV R2 #255
 PSR PC
-JMP doubledabble
+JMP double_dabble
 HLT
 
 ; converts integer to bcd representation
 ; R2 = integer/low digits
 ; R3 will be high 2 digits
-; R4-R used temporarily
-doubledabble
+; R4-R10 used temporarily
+double_dabble
     MOV R4 R2; copy of original binary
     MOV R2 #0
     MOV R3 #0
     ; Left shift into the output digits
     ; For each group of input four bits:
     ;   If group >= 5 add 3 to group
-    MOV R5 #32
-    doubledabble_loop1
-
-    doubledabble_end
+    double_dabble_loop1
+        ADD R0 R4 R0;
+        BZS double_dabble_end; check against 0
+        MOV R5 #x80000000; bit mask
+        ; shift msb of low bcd into lsb of high bcd
+        MOV R3 R3 LSL R1
+        NND R7 R2 R5
+        NND R0 R7 R7
+        BZS double_dabble_high_shift_end
+            ADD R3 R3 R1
+        double_dabble_high_shift_end
+        ; shift msb of int into lsb of low bcd
+        MOV R2 R2 LSL R1
+        NND R7 R4 R5
+        NND R0 R7 R7
+        MOV R4 R4 LSL R1
+        BZS double_dabble_low_shift_end
+            ADD R2 R2 R1
+        double_dabble_low_shift_end
+        ADD R0 R4 R0
+        BZS double_dabble_end
+        MOV R5 #-5
+        MOV R8 #xF; bitmask
+        MOV R9 #4
+        ADD R0 R3 R0
+        BZS double_dabble_low_group_check
+            NND R10 R3 R8
+            NND R10 R10 R10
+            ADD R0 R10 R5; compare against 5
+            BNS double_dabble_skip_high0
+                MOV R5 #3
+                ADD R10 R10 R5
+                MOV R5 #-5
+                NND R8 R8 R8
+                NND R3 R3 R8
+                NND R3 R3 R3
+                NND R8 R8 R8
+                ADD R3 R3 R10
+            double_dabble_skip_high0
+            MOV R10 R3 LSR R9
+            NND R10 R10 R8
+            NND R10 R10 R10
+            ADD R0 R10 R5; compare against 5
+            BNS double_dabble_low_group_check
+                MOV R5 #3
+                ADD R10 R10 R5
+                MOV R5 #-5
+                NND R3 R3 R8
+                NND R3 R3 R3
+                MOV R10 R10 LSL R9
+                ADD R3 R3 R10
+        double_dabble_low_group_check
+        ADD R0 R2 R0
+        BZS double_dabble_loop1
+            MOV R6 #32; shamt
+            MOV R9 #-4
+            double_dabble_low_loop
+                ADD R6 R6 R9
+                BNS double_dabble_loop1
+                MOV R10 R2 LSR R6
+                NND R10 R10 R8
+                NND R10 R10 R10
+                ADD R0 R10 R5; check if digit is >= 5
+                BNS double_dabble_low_loop
+                    MOV R5 #3
+                    ADD R10 R10 R5; add 3 to digit
+                    MOV R5 #-5
+                    NND R10 R10 R8
+                    NND R10 R10 R10
+                    MOV R10 R10 LSL R6
+                    MOV R8 R8 LSL R6
+                    NND R8 R8 R8
+                    NND R2 R2 R8
+                    NND R2 R2 R2
+                    ADD R2 R2 R10; correct digit
+                    NND R8 R8 R8; restore bit mask
+                    MOV R8 R8 LSR R6
+                JMP double_dabble_low_loop
+    double_dabble_end
     PPR PC
 ; end of program

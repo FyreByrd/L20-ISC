@@ -35,5 +35,6 @@ If there are `__DATA` tags in the source file, the data will be separated out in
 - ascii2bcd.l20
     - converts array of ascii characters to a bcd number with up to 8 digits.
 - bcd2int.l20
-    - converts an 8 digit bcd to an interger value
-    
+    - converts an 8 digit bcd to an integer value
+- doubledabble.l20
+    - converts an integer into a 10 digit bcd
