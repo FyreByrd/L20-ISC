@@ -9,10 +9,9 @@ start_of_loop
     LDR R4 R6[R1] ; B
     LDR R5 R6[R2] ; C
     NND R4 R4 R4 ; negate B for one's complement
-    SEF C ; set carry flag for two's complement
+    ADD R4 R4 R1 ; add one for two's complement
     ADD R4 R3 R4 ; A - B
     STR R4 R6[R1] ; store sum in B's memory location
-    CLF C ; clear carry flag so other additions are not messed up
     BNS is_less_than
         JMP next
         is_less_than 

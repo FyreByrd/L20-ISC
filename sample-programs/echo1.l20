@@ -13,7 +13,6 @@ io_loop
 BZS io_loop
     STR R5 R2
     ADD R0 R5 R10
-    CLF C
     BZS end
 JMP io_loop
 end HLT

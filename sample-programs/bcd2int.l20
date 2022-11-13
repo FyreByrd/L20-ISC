@@ -12,15 +12,6 @@ __DATA num 0x255
 ; put bcd in R2, int will be put in R2
 ; uses R3-R10 temporarily
 bcd_to_int
-    ; preserve temp regs
-        PSR R3
-        PSR R4
-        PSR R5
-        PSR R6
-        PSR R7
-        PSR R8
-        PSR R9
-        PSR R10
     ; MOV R2 num
     MOV R3 #0; converted number
     ADD R0 R2 R0; compare against 0
@@ -39,7 +30,6 @@ bcd_to_int
         ADD R3 R3 R4; add bit to output
         MOV R2 R2 LSR R1; shift bcd right 1
         ADD R10 R10 RNEG; decrement 
-        CLF C
         ADD R0 R2 R0; compare against 0
         BZS bcd_to_int_end
         MOV R5 #xF
@@ -47,18 +37,14 @@ bcd_to_int
         ; scan for 8 or greater
         bcd_to_int_loop2
             ADD R7 R7 R8
-            CLF C
             ADD R0 R7 R0
-            CLF C
             BNS bcd_to_int_loop1
             MOV R4 R2 LSR R7
             NND R4 R4 R5
             NND R4 R4 R4; bit mask the digit
             ADD R0 R4 R9
-            CLF C
             BNS bcd_to_int_loop2
                 ADD R4 R4 R6; subtract 3 from digit
-                CLF C
                 MOV R5 R5 LSL R7
                 NND R5 R5 R5
                 NND R2 R2 R5
@@ -69,16 +55,6 @@ bcd_to_int
                 MOV R5 R5 LSR R7; restore bit mask
             JMP bcd_to_int_loop2
     bcd_to_int_end
-    CLF NZCV
     MOV R2 R3 LSR R10; move output to new
-    ; restore temp regs
-        PPR R10
-        PPR R9
-        PPR R8
-        PPR R7
-        PPR R6
-        PPR R5
-        PPR R4
-        PPR R3
     PPR PC; return
 ; end of program
