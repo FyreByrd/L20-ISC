@@ -35,6 +35,7 @@ R1 always 0x00000001
 R127 always 0xFFFFFFFF
 R126 = PC
 R125 = SP
+R124 = LR
 special mnemonics
 NOP: MOV R0, R0
 HLT: INR #0

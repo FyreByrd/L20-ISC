@@ -3,8 +3,7 @@
 ; description: converts 8 digit bcd to integer
 MOV R2 num
 LDR R2 R2
-PSR PC
-JMP bcd_to_int
+CALL bcd_to_int
 HLT
 __DATA num 0x255
 
@@ -57,5 +56,5 @@ bcd_to_int
             JMP bcd_to_int_loop2
     bcd_to_int_end
     MOV R2 R3 LSR R10; move output to new
-    PPR PC; return
+    RET
 ; end of program

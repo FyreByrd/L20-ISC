@@ -7,10 +7,33 @@ mn2hex = {
     "ADD":0x4, "NND":0x5, "PSR":0x6, "SEF":0x7, 
     "CLF":0x8, "PPR":0x9, "MOV":0xa, "B":0xb}
 
-aliases = {"RNEG":"R127", "PC":"R126", "SP":"R125", 
+aliases = {"RNEG":"R127", "PC":"R126", "SP":"R125", "LR":"R124",
     "JMP": "B #b0000", "BNS": "B #b1000", "BZS": "B #b0100", "BCS":"B #b0010", "BVS":"B #b0001",
-    "HLT": "CIR #0", "NOP": "MOV R0 R0", "IO_block": "#x1000000"
+    "HLT": "CIR #0", "NOP": "MOV R0 R0", "IO_block": "#x1000000", "RET": "MOV PC LR",
+    "CALL":["PSR LR", "MOV LR PC", "JMP %1", "PPR LR"]
 }
+def test_alias(line:str) -> tuple[bool, str]:
+    if line in aliases:
+        if type(aliases[line]) == list:
+            return (True, aliases[line].copy())
+        return (True, aliases[line])
+    else:
+        return (False, line)
+for k, v in aliases.items():
+    if type(v) == list:
+        for z in range(len(v)):
+            x = v[z].split()
+            for y in range(len(x)):
+                x[y] = test_alias(x[y])[1]
+            v[z] = " ".join(x)
+        aliases[k] = v
+    else:
+        x = v.split()
+        for y in range(len(x)):
+            x[y] = test_alias(x[y])[1]
+        v = " ".join(x)
+        aliases[k] = v
+
 labels = {}
 data_labels = {}
 data = []
@@ -99,13 +122,7 @@ def splitLine(line:str) -> list[str]:
     if instr == "":
         return []
     parts = instr.split()
-    return parts
-
-def test_alias(line:str) -> tuple[bool, str]:
-    if line in aliases:
-        return (True, aliases[line])
-    else:
-        return (False, line)     
+    return parts     
 
 def process_data_group(g, line:int):
     cg = True
@@ -162,8 +179,6 @@ def preprocess(line: tuple[str, int, str], pc:int) -> tuple[str, int, int]:
     if len(parts) > 0:
         global grouping
         if grouping != "":
-            #print("continue group: "+grouping)
-            #print(parts)
             if grouping == "]":
                 g = parts
             else:
@@ -190,25 +205,39 @@ def preprocess(line: tuple[str, int, str], pc:int) -> tuple[str, int, int]:
                             error("Data label requires a group for more than one value", "", line[1])
                         else:
                             data.append(parseImm(parts[2], line[1]))
-                pass
         else:
             #print(line[2]+" ("+str(line[1])+"): "+str(parts))
             for i in range(len(parts)):
                 t = test_alias(parts[i])
                 parts[i] = t[1]
-            parts = splitLine(" ".join(parts))
-            if parts[0] in mn2hex:
-                pc += 1
+            if type(parts[0]) == list:
+                for p in range(len(parts[0])):
+                    l = parts[0][p].split("%")
+                    l[0] = l[0].strip()
+                    for j in range(1, len(l)):
+                        l[j] = parts[int(l[j].strip())]
+                    parts[0][p] = " ".join(l)
+                parts = parts[0]
+                r = []
+                for p in parts:
+                    if p.split()[0] in mn2hex:
+                        pc += 1
+                    r.append((p, line[1]))
+                return (r, pc, line[1])
             else:
-                if parts[0] in labels:
-                    error("Duplicate label", parts[0], line[1])
+                parts = splitLine(" ".join(parts))
+                if parts[0] in mn2hex:
+                    pc += 1
                 else:
-                    if parts[0] not in mn2hex:
-                        labels[parts[0]] = pc + 1
-                        parts = parts[1:]
-                        if len(parts) > 0 and parts[0] in mn2hex:
-                            pc += 1
-            return (" ".join(parts), pc, line[1])
+                    if parts[0] in labels:
+                        error("Duplicate label", parts[0], line[1])
+                    else:
+                        if parts[0] not in mn2hex:
+                            labels[parts[0]] = pc + 1
+                            parts = parts[1:]
+                            if len(parts) > 0 and parts[0] in mn2hex:
+                                pc += 1
+                return (" ".join(parts), pc, line[1])
     return ("", pc, line[1])
 
 def assemble(instr: str, line:int, pc:int, show: bool = False) -> tuple[str, str, int]:
@@ -267,6 +296,8 @@ def assemble(instr: str, line:int, pc:int, show: bool = False) -> tuple[str, str
         elif op in [6, 9]: #PSR, PPR
             if rcount == 0:
                 r = parseReg(s, line)
+                if op == 9 and r == 126:
+                    error("Disallowed PPR PC", "", line)
                 ins |= r << 21
                 rcount += 1
             else:
@@ -456,14 +487,17 @@ else:
         t = preprocess(src[i], pc)
         pc = t[1]
         if len(t[0]) > 0:
-            srcpre.append((t[0], t[2]))
-            #print(str(pc)+": "+t[0])
+            if type(t[0]) == list:
+                srcpre.extend(t[0])
+            else:
+                srcpre.append((t[0], t[2]))
     src = srcpre
     #print(json.dumps(labels, indent=4))
     #print(json.dumps(data_labels, indent=4))
     #print(data)
     pc = 0
     for i in range(len(src)):
+
         t = assemble(src[i][0], src[i][1], pc, True)
         if t[0] != "":
             text_out.append(t[0]+" # 0x"+str(format(pc, "06x"))+(": "+t[1] if len(t[1]) > 0 else "")+"\n")

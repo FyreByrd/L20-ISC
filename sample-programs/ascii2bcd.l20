@@ -3,8 +3,7 @@
 ; description: converts an array of ascii characters to a bcd number
 MOV R2 num
 MOV R3 #7
-PSR PC
-JMP ascii_to_bcd
+CALL ascii_to_bcd
 HLT
 __DATA num '12345678'; number to convert
 
@@ -32,6 +31,6 @@ ascii_to_bcd
         JMP ascii_to_bcd_loop
     ascii_to_bcd_end
     MOV R2 R6
-    PPR PC; return
+    RET
 
 ; end of program

@@ -4,8 +4,7 @@
 MOV R2 #255
 PSR R2
 MOV R2 hello
-PSR PC
-JMP print_str_func
+CALL print_str_func
 PPR R2
 HLT
 
@@ -52,4 +51,4 @@ print_str_func
     JMP print_str_func_four
     ; WHILE character != 0
     print_str_func_end
-    PPR PC; return
+    RET
