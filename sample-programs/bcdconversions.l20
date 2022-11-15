@@ -1,0 +1,223 @@
+; file: bcdconversions.l20
+; author: Aidan Jones
+; description: defines some useful functions for working with bcd numbers
+HLT; not designed to be run, merely storage
+
+; converts an array of ascii characters to an 8-digit bcd number
+; R2 is pointer to array, and will be return value
+; R3 is the number of digits
+; R4-R8 are used temporarily
+ascii_to_bcd
+    ;MOV R2 num
+    ;MOV R3 number of digits
+    ADD R3 R3 RNEG
+    MOV R4 #-x30; ascii to bcd
+    MOV R5 #0; shift amt
+    MOV R6 #0; result
+    MOV R8 #4
+    ascii_to_bcd_loop
+        LDR R7 R2[R3]; read character from memory
+        ADD R7 R7 R4; convert to number
+        MOV R7 R7 LSL R5; shift to correct place
+        ADD R6 R6 R7; add digit to result
+
+        ADD R5 R5 R8
+        ADD R3 R3 RNEG
+        BNS ascii_to_bcd_end
+        JMP ascii_to_bcd_loop
+    ascii_to_bcd_end
+    MOV R2 R6
+    RET
+; converts bcd to int
+; put bcd in R2, int will be put in R2
+; uses R3-R10 temporarily
+bcd_to_int
+    ; MOV R2 num
+    MOV R3 #0; converted number
+    ADD R0 R2 R0; compare against 0
+    BZS bcd_to_int_end
+    MOV R6 #-3
+    MOV R8 #-4
+    MOV R9 #-8
+    MOV R10 #32
+    ADD R0 R2 R0; compare against 0
+    BZS bcd_to_int_end
+    bcd_to_int_loop1
+        MOV R5 #x1F
+        NND R4 R2 R1
+        NND R4 R4 R4; grab last bit
+        MOV R3 R3 LSR R1; shift output right 1
+        MOV R4 R4 LSL R5; shift lsb of bcd to msb of output
+        ADD R3 R3 R4; add bit to output
+        MOV R2 R2 LSR R1; shift bcd right 1
+        ADD R10 R10 RNEG; decrement 
+        ADD R0 R2 R0; compare against 0
+        BZS bcd_to_int_end
+        MOV R5 #xF
+        MOV R7 #32
+        ; scan for 8 or greater
+        bcd_to_int_loop2
+            ADD R7 R7 R8
+            ADD R0 R7 R0
+            BNS bcd_to_int_loop1
+            MOV R4 R2 LSR R7
+            NND R4 R4 R5
+            NND R4 R4 R4; bit mask the digit
+            ADD R0 R4 R9
+            BNS bcd_to_int_loop2
+                ADD R4 R4 R6; subtract 3 from digit
+                MOV R5 R5 LSL R7
+                NND R5 R5 R5
+                NND R2 R2 R5
+                NND R2 R2 R2; bit mask bcd to clear digit
+                MOV R4 R4 LSL R7
+                ADD R2 R2 R4; add corrected digit
+                NND R5 R5 R5
+                MOV R5 R5 LSR R7; restore bit mask
+            JMP bcd_to_int_loop2
+    bcd_to_int_end
+    MOV R2 R3 LSR R10; move output to new
+    RET
+; converts integer to bcd representation
+; R2 = integer/low digits
+; R3 will be high 2 digits
+; R4-R10 used temporarily
+double_dabble
+    MOV R4 R2; copy of original binary
+    MOV R2 #0
+    MOV R3 #0
+    double_dabble_loop1
+        ADD R0 R4 R0;
+        BZS double_dabble_end; check against 0
+        MOV R5 #x80000000; bit mask
+        ; shift msb of low bcd into lsb of high bcd
+        MOV R3 R3 LSL R1
+        NND R7 R2 R5
+        NND R0 R7 R7
+        BZS double_dabble_high_shift_end
+            ADD R3 R3 R1
+        double_dabble_high_shift_end
+        ; shift msb of int into lsb of low bcd
+        MOV R2 R2 LSL R1
+        NND R7 R4 R5
+        NND R0 R7 R7
+        MOV R4 R4 LSL R1
+        BZS double_dabble_low_shift_end
+            ADD R2 R2 R1
+        double_dabble_low_shift_end
+        ADD R0 R4 R0
+        BZS double_dabble_end
+        MOV R5 #-5
+        MOV R8 #xF; bitmask
+        MOV R9 #4
+        ADD R0 R3 R0
+        BZS double_dabble_low_group_check
+            NND R10 R3 R8
+            NND R10 R10 R10
+            ADD R0 R10 R5; compare against 5
+            BNS double_dabble_skip_high0
+                MOV R5 #3
+                ADD R10 R10 R5
+                MOV R5 #-5
+                NND R8 R8 R8
+                NND R3 R3 R8
+                NND R3 R3 R3
+                NND R8 R8 R8
+                ADD R3 R3 R10
+            double_dabble_skip_high0
+            MOV R10 R3 LSR R9
+            NND R10 R10 R8
+            NND R10 R10 R10
+            ADD R0 R10 R5; compare against 5
+            BNS double_dabble_low_group_check
+                MOV R5 #3
+                ADD R10 R10 R5
+                MOV R5 #-5
+                NND R3 R3 R8
+                NND R3 R3 R3
+                MOV R10 R10 LSL R9
+                ADD R3 R3 R10
+        double_dabble_low_group_check
+        ADD R0 R2 R0
+        BZS double_dabble_loop1
+            MOV R6 #32; shamt
+            MOV R9 #-4
+            double_dabble_low_loop
+                ADD R6 R6 R9
+                BNS double_dabble_loop1
+                MOV R10 R2 LSR R6
+                NND R10 R10 R8
+                NND R10 R10 R10
+                ADD R0 R10 R5; check if digit is >= 5
+                BNS double_dabble_low_loop
+                    MOV R5 #3
+                    ADD R10 R10 R5; add 3 to digit
+                    MOV R5 #-5
+                    NND R10 R10 R8
+                    NND R10 R10 R10
+                    MOV R10 R10 LSL R6
+                    MOV R8 R8 LSL R6
+                    NND R8 R8 R8
+                    NND R2 R2 R8
+                    NND R2 R2 R2
+                    ADD R2 R2 R10; correct digit
+                    NND R8 R8 R8; restore bit mask
+                    MOV R8 R8 LSR R6
+                JMP double_dabble_low_loop
+    double_dabble_end
+    RET
+; converts a binary coded decimal to a packed string for printing
+; R2 = bcd number (low 8 digits)
+; R3 = pointer to string buffer
+; uses R4-R10 temporarily
+bcd_to_str
+        MOV R4 #32
+        MOV R5 #-4
+        MOV R6 #xF; bitmask
+        MOV R8 #48; offset to ascii
+        bcd_to_str_0_loop
+                ADD R4 R4 R5
+                BNS bcd_to_str_all_0
+                MOV R7 R2 LSR R4
+                NND R7 R7 R6
+                NND R7 R7 R7
+                BZS bcd_to_str_0_loop
+        bcd_to_str_convert_loop
+                MOV R9 #0
+                MOV R10 #0; set of four characters
+                bcd_to_str_four_loop
+                        MOV R7 R2 LSR R4
+                        NND R7 R7 R6
+                        NND R7 R7 R7
+                        ADD R7 R7 R8
+                        MOV R8 #8
+                        MOV R10 R10 LSL R8
+                        ADD R10 R10 R7
+                        MOV R8 #48
+                        ADD R9 R9 R1
+                        ADD R4 R4 R5
+                        BNS bcd_to_str_zeropad
+                        MOV R5 #-3
+                        ADD R0 R9 R5
+                        MOV R5 #-4
+                        BZS bcd_to_str_store
+                        JMP bcd_to_str_four_loop
+                bcd_to_str_zeropad
+                        MOV R5 #-3
+                        ADD R9 R9 R5
+                        BNS bcd_to_str_store
+                        MOV R6 #8
+                        MOV R6 R6 LSL R9
+                        MOV R10 R10 LSL R6
+                bcd_to_str_store
+                STR R10 R3; store set of four
+                ADD R3 R3 R1
+                ADD R0 R4 RNEG
+                BNS bcd_to_str_end
+                JMP bcd_to_str_convert_loop
+        bcd_to_str_all_0
+                MOV R4 #28
+                MOV R8 R8 LSL R4
+                STR R8 R3
+        bcd_to_str_end RET
+; end
