@@ -7,13 +7,17 @@ mn2hex = {
     "ADD":0x4, "NND":0x5, "PSR":0x6, "SEF":0x7, 
     "CLF":0x8, "PPR":0x9, "MOV":0xa, "B":0xb}
 
-aliases = {"RNEG":"R127", "PC":"R126", "SP":"R125", "LR":"R124",
+aliases = {"RNEG":"R127", "PC":"R126", "SP":"R125", "LR":"R124", "T0": "R123", "T1":"R122",
     "JMP": "B #b0000", "BNS": "B #b1000", "BZS": "B #b0100", "BCS":"B #b0010", "BVS":"B #b0001",
     "HLT": "CIR #0", "NOP": "MOV R0 R0", "IO_block": "#x1000000", "RET": "MOV PC LR",
-    "CALL":["PSR LR", "MOV LR PC", "JMP %1", "PPR LR"], 
-    "AND":["NND %1 %2 %3", "NND %1 %1 %1"],
-    "MVN":["NND %1 %2 %2"],
-    "BIC":["MVN %3 %3", "AND %1 %2 %3", "MVN %3 %3"]#, "ADD R0 %1 R0"]
+    "<<": "LSL", ">>":"LSR", ">>>":"ASR",
+    "CALL":["PSR LR", "MOV LR PC", "JMP $1", "PPR LR"], 
+    "AND":["NND $1 $2 $3", "NND $1 $1 $1"],
+    "MVN":["NND $1 $2 $2"],
+    "BIC":["MVN T0 $3", "AND $1 $2 T0"],
+    "SUB":["MVN T0 $3", "ADD T0 T0 R1", "ADD $1 $2 T0"],
+    "ORR":["MVN T0 $2", "MVN $1 $3", "NND $1 $1 T1"],
+    "XOR":["NND $1 $2 $3", "NND T0 $2 $1", "NND T1 $3 $1", "NND $1 T0 T1"]
 }
 def test_alias(line:str) -> tuple[bool, str]:
     if line in aliases:
@@ -31,11 +35,11 @@ for k, v in aliases.items():
                 if x[y] != k:
                     x[y] = test_alias(x[y])[1]
             for j in range(len(x[0])):
-                if '%' in x[0][j]:
-                    x[0][j] = x[0][j].split('%')
+                if '$' in x[0][j]:
+                    x[0][j] = x[0][j].split('$')
                     x[0][j][0] = x[0][j][0].strip()
                     for i in range(1, len(x[0][j])):
-                        x[0][j][i] = x[int(x[0][j][i].strip())]
+                        x[0][j][i] = x[int(x[0][j][i].split()[0])]
                     x[0][j] = " ".join(x[0][j])
             if type(x[0]) == list:
                 x = x[0]
@@ -229,10 +233,10 @@ def preprocess(line: tuple[str, int, str], pc:int) -> tuple[str, int, int]:
                 parts[i] = t[1]
             if type(parts[0]) == list:
                 for p in range(len(parts[0])):
-                    l = parts[0][p].split("%")
+                    l = parts[0][p].split("$")
                     l[0] = l[0].strip()
                     for j in range(1, len(l)):
-                        l[j] = parts[int(l[j].strip())]
+                        l[j] = parts[int(l[j].split()[0])]
                     parts[0][p] = " ".join(l)
                 parts = parts[0]
                 r = []
@@ -243,7 +247,14 @@ def preprocess(line: tuple[str, int, str], pc:int) -> tuple[str, int, int]:
                 return (r, pc, line[1])
             else:
                 parts = splitLine(" ".join(parts))
-                if parts[0] in mn2hex:
+                if parts[0] in ["PSR", "PPR"]:
+                    dir = 1 if parts[0] == "PSR" else -1
+                    r = []
+                    for i in range(2*dir, dir*(len(parts) - 1), dir):
+                        pc += 1
+                        r.append((" ".join([parts[0], parts[i]]), line[1]))
+                    return (r, pc, line[1])
+                elif parts[0] in mn2hex:
                     pc += 1
                 else:
                     if parts[0] in labels:
@@ -263,6 +274,7 @@ def assemble(instr: str, line:int, pc:int, show: bool = False) -> tuple[str, str
     parts = splitLine(instr)
     if len(parts) == 0:
         return ("", "", pc)
+    #print(parts)
     startindex = 1
     # try to convert mnemonic to opcode
     try:
@@ -508,6 +520,7 @@ else:
                 srcpre.extend(t[0])
             else:
                 srcpre.append((t[0], t[2]))
+            #print(t[0])
     src = srcpre
     #print(json.dumps(labels, indent=4))
     #print(json.dumps(data_labels, indent=4))
