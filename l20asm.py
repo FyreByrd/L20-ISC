@@ -1,6 +1,6 @@
 from math import log2, ceil
 from sys import argv
-import json
+#import json
 
 mn2hex = {
     "CIR":0x0, "SIR":0x1, "LDR":0x2, "STR":0x3, 
@@ -10,7 +10,10 @@ mn2hex = {
 aliases = {"RNEG":"R127", "PC":"R126", "SP":"R125", "LR":"R124",
     "JMP": "B #b0000", "BNS": "B #b1000", "BZS": "B #b0100", "BCS":"B #b0010", "BVS":"B #b0001",
     "HLT": "CIR #0", "NOP": "MOV R0 R0", "IO_block": "#x1000000", "RET": "MOV PC LR",
-    "CALL":["PSR LR", "MOV LR PC", "JMP %1", "PPR LR"]
+    "CALL":["PSR LR", "MOV LR PC", "JMP %1", "PPR LR"], 
+    "AND":["NND %1 %2 %3", "NND %1 %1 %1"],
+    "MVN":["NND %1 %2 %2"],
+    "BIC":["MVN %3 %3", "AND %1 %2 %3", "MVN %3 %3"]#, "ADD R0 %1 R0"]
 }
 def test_alias(line:str) -> tuple[bool, str]:
     if line in aliases:
@@ -21,18 +24,32 @@ def test_alias(line:str) -> tuple[bool, str]:
         return (False, line)
 for k, v in aliases.items():
     if type(v) == list:
+        a = []
         for z in range(len(v)):
             x = v[z].split()
             for y in range(len(x)):
-                x[y] = test_alias(x[y])[1]
-            v[z] = " ".join(x)
-        aliases[k] = v
+                if x[y] != k:
+                    x[y] = test_alias(x[y])[1]
+            for j in range(len(x[0])):
+                if '%' in x[0][j]:
+                    x[0][j] = x[0][j].split('%')
+                    x[0][j][0] = x[0][j][0].strip()
+                    for i in range(1, len(x[0][j])):
+                        x[0][j][i] = x[int(x[0][j][i].strip())]
+                    x[0][j] = " ".join(x[0][j])
+            if type(x[0]) == list:
+                x = x[0]
+            else:
+                x = [" ".join(x)]
+            a.extend(x)
+        aliases[k] = a
     else:
         x = v.split()
         for y in range(len(x)):
             x[y] = test_alias(x[y])[1]
         v = " ".join(x)
         aliases[k] = v
+#print(json.dumps(aliases, indent=4))
 
 labels = {}
 data_labels = {}
