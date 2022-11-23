@@ -25,42 +25,42 @@ Opcodes 0xC-0xF are left unused for future expansion.
 
 ## Status Flags
 
-ADD always sets N, Z, C, V
+ADD always sets N, Z, C, V  
 NND always sets N, Z and clears C, V
 
 ## Register structure
 
-R0 always 0x00000000
-R1 always 0x00000001
-R127 always 0xFFFFFFFF
-R126 = PC
-R125 = SP
-R124 = LR
+R0 always 0x00000000  
+R1 always 0x00000001  
+R127 always 0xFFFFFFFF  
+R126 = PC  
+R125 = SP  
+R124 = LR  
 special mnemonics
-NOP: MOV R0, R0
-HLT: INR #0
+NOP: MOV R0, R0  
+HLT: INR #0  
 
 shifts
-0: LSL (<<)
-1: LSR (>>)
-2: ASR (>>>)
-3: imm12 << imm5 (sign-extended)
+0: LSL (<<)  
+1: LSR (>>)  
+2: ASR (>>>)  
+3: imm12 << imm5 (sign-extended)  
 
-conditions:
-0000: Negative flag Set
-0100: Zero flag Set
-0010: Carry flag Set
-0001: oVerflow flag Set
-0000: unconditionAL
+conditions:  
+1000: Negative flag Set  
+0100: Zero flag Set  
+0010: Carry flag Set  
+0001: oVerflow flag Set  
+0000: unconditionAL  
 
-31 30 29 28|27 26 25 24|23 22 21 20|19 18 17 16|15 14 13 12|11 10 09 08|07 06 05 04|03 02 01 00
+31 30 29 28|27 26 25 24|23 22 21 20|19 18 17 16|15 14 13 12|11 10 09 08|07 06 05 04|03 02 01 00  
 | opcode 4| |       Rd 7       | |       Rn 7       | |     control 7    | |       Rm 7       |
 
 ## Interrupts
 
-NVIC format
-31: type (0: halt, 1:jump to handler)
-30-24: priority
+NVIC format  
+31: type (0: halt, 1:jump to handler)  
+30-24: priority  
 23-0: handler address
 
 ## IO
