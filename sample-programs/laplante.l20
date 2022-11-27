@@ -3,7 +3,6 @@
 ; description: emulates the OISC described in Laplante (1990), A novel single instruction computer architecture
 MOV R6 emulated_memory ; virtual program counter
 MOV R2 #2 ; index for X
-MOV R7 #3 ; PC increment
 start_of_loop
     ;;; "subtract the contents of memory location A from that of B"
     LDR R3 R6[R0] ; load contents of memory cell A
@@ -11,14 +10,15 @@ start_of_loop
     NND R4 R4 R4  ; negate B for one's complement
     ADD R4 R4 R1  ; add one for two's complement
     ADD R4 R3 R4  ; A - B
-    ;;; "stor[e] the results in both A and B"
-    STR R4 R6     ; store sum in A's memory location
-    STR R4 R6[R1] ; store sum in B's memory location
-    ;;; PC <-- A - B + X
-    LDR R5 R6[R2] ; load contents of memory cell X  
+    ;;; "stor[e] the result in both A and B"
+    STR R4 R6[R0] ; store sum in memory cell A
+    STR R4 R6[R1] ; store sum in memory cell B
+    ;;; “PC <-- A - B + X”
+    LDR R5 R6[R2] ; load contents of memory cell X
     ADD R6 R4 R5  ; PC = A - B + X
 JMP start_of_loop
 
-__DATA emulated_memory [
-    ; I don't know how to write a meaningful program with Laplante's instruction set
+
+__DATA emulated_memory [ 
+    ; emulated program here 
 ]
