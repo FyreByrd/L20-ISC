@@ -17,7 +17,9 @@ aliases = {"RNEG":"R127", "PC":"R126", "SP":"R125", "LR":"R124", "T0": "R123", "
     "BIC":["MVN T0 $3", "AND $1 $2 T0"],
     "SUB":["MVN T0 $3", "ADD T0 T0 R1", "ADD $1 $2 T0"],
     "ORR":["MVN T0 $2", "MVN $1 $3", "NND $1 $1 T1"],
-    "XOR":["NND $1 $2 $3", "NND T0 $2 $1", "NND T1 $3 $1", "NND $1 T0 T1"]
+    "XOR":["NND $1 $2 $3", "NND T0 $2 $1", "NND T1 $3 $1", "NND $1 T0 T1"],
+    "INC":["ADD $1 $1 R1"],
+    "DEC":["ADD $1 $1 RNEG"]
 }
 def test_alias(line:str) -> tuple[bool, str]:
     if line in aliases:
@@ -236,7 +238,7 @@ def preprocess(line: tuple[str, int, str], pc:int) -> tuple[str, int, int]:
                     l = parts[0][p].split("$")
                     l[0] = l[0].strip()
                     for j in range(1, len(l)):
-                        l[j] = parts[int(l[j].split()[0])]
+                        l[j] = parts[int(l[j].split()[0])] + " " + " ".join(l[j].split()[1:])
                     parts[0][p] = " ".join(l)
                 parts = parts[0]
                 r = []
